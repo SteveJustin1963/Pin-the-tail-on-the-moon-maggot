@@ -7,64 +7,64 @@ I have ridden the mighty moon worm!
 
 ```
 // Initialize 4x4x4 array in memory (64 bytes total for 4 layers)
-:I 64 /A m! 
-   64( 0 m /i /? /! )  // Fill array with zeros
+:I 64 /A a b!  
+   64( 0 a /i /? c b! )  // Fill array with zeros
 ;
 
 // Set value in 3D array: value x y z -- 
-:S z! y! x! v!
-   z 16 * y 4 * + x + // Calculate offset
-   v $ m $ /? /!      // Store value at offset
+:S p b! q b! r b! s b!
+   p 16 * q 4 * + r + t b! // Calculate offset
+   s t a t /? u b! /!      // Store value at offset
 ;
 
 // Get value from 3D array: x y z -- value
-:G z! y! x!
-   z 16 * y 4 * + x + // Calculate offset
-   m $ /? .           // Get and print value
+:G d b! e b! f b!
+   d 16 * e 4 * + f + g b! // Calculate offset
+   a g /? .                // Get and print value
 ;
 
 // Move servos to position: x y z --
-:M z! y! x!
+:M h b! i b! j b!
    // Map 0-3 to servo ranges (0-180)
-   x 45 * s1!         // X servo position
-   y 45 * s2!         // Y servo position
-   z 45 * s3!         // Z servo position
+   h 45 * k b!            // X servo position
+   i 45 * l b!            // Y servo position
+   j 45 * m b!            // Z servo position
    
    // Output to servo ports
-   s1 #80 /O          // Servo 1 control
-   s2 #81 /O          // Servo 2 control
-   s3 #82 /O          // Servo 3 control
-   100()              // Delay for movement
+   k #80 /O               // Servo 1 control
+   l #81 /O               // Servo 2 control
+   m #82 /O               // Servo 3 control
+   100()                  // Delay for movement
 ;
 
 // Check whiskers: -- bool
-:W #83 /I 1 & .      // Read whisker port and mask bit 0
+:W #83 /I 1 & n b! n .    // Read whisker port, mask bit 0
 ;
 
 // Scan single position: x y z --
-:P z! y! x!
-   x y z M            // Move to position
-   100()              // Wait for movement
-   W (                // If whisker contact
-      1 x y z S       // Mark position as occupied
+:P h b! i b! j b!
+   h i j M                // Move to position
+   100()                  // Wait for movement
+   W (                    // If whisker contact
+      1 h i j S           // Mark position as occupied
    )
 ;
 
 // Full scan sequence
-:F 4( i z!           // For each z layer
-     4( i y!         // For each y row
-        4( i x!      // For each x column
-           x y z P   // Scan position
+:F 4( /i o b!            // For each z layer
+     4( /i p b!          // For each y row
+        4( /i q b!       // For each x column
+           q p o P       // Scan position
         )
      )
   )
 ;
 
 // Main loop
-:L I                 // Initialize array
-   /U(               // Infinite loop
-      F              // Do full scan
-      1000()         // Wait 5 seconds
+:L I                     // Initialize array
+   /U(                   // Infinite loop
+      F                  // Do full scan
+      1000()            // Wait 5 seconds
    )
 ;
 
