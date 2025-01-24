@@ -10,25 +10,25 @@ I have ridden the mighty moon worm!
    [ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ] m b!
+     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ] m !
    `Init: Complete` /N
 ;
 
 :S `Set: Starting` /N
-   p b! q b! r b! s b!
+   p ! q ! r ! s !      // Store coordinates and value
    `Set: Coordinates x:` p . ` y:` q . ` z:` r . ` val:` s . /N
-   p 16 * q 4 * + r + t b! 
+   p 16 * q 4 * + r + t !  // Calculate offset
    `Set: Offset calculated:` t . /N
-   s m t ? u b!  // Use ? for array access
+   s m t ? !            // Store value in array
    `Set: Value stored` /N
 ;
 
 :G `Get: Starting` /N
-   d b! e b! f b!
+   d ! e ! f !          // Store coordinates
    `Get: Reading x:` d . ` y:` e . ` z:` f . /N
-   d 16 * e 4 * + f + g b!
+   d 16 * e 4 * + f + g !  // Calculate offset
    `Get: Offset calculated:` g . /N
-   `Get: Value is:` m g ? . /N  // Use ? for array access
+   `Get: Value is:` m g ? . /N
 ;
 
 :M `Move: Starting servo move` /N
