@@ -6,69 +6,93 @@ I have ridden the mighty moon worm!
 ![image](https://github.com/user-attachments/assets/1da215c2-d7fb-4136-acff-ad82446f8f94)
 
 ```
-// Initialize 4x4x4 array in memory (64 bytes total for 4 layers)
-:I 64 /A a b!  
-   64( 0 a /i /? c b! )  // Fill array with zeros
+:I `Init: Creating array` 
+   [ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ] m b!
+   `Init: Complete` /N
 ;
 
-// Set value in 3D array: value x y z -- 
-:S p b! q b! r b! s b!
-   p 16 * q 4 * + r + t b! // Calculate offset
-   s t a t /? u b! /!      // Store value at offset
+:S `Set: Starting` /N
+   p b! q b! r b! s b!
+   `Set: Coordinates x:` p . ` y:` q . ` z:` r . ` val:` s . /N
+   p 16 * q 4 * + r + t b! 
+   `Set: Offset calculated:` t . /N
+   s m t ? u b!  // Use ? for array access
+   `Set: Value stored` /N
 ;
 
-// Get value from 3D array: x y z -- value
-:G d b! e b! f b!
-   d 16 * e 4 * + f + g b! // Calculate offset
-   a g /? .                // Get and print value
+:G `Get: Starting` /N
+   d b! e b! f b!
+   `Get: Reading x:` d . ` y:` e . ` z:` f . /N
+   d 16 * e 4 * + f + g b!
+   `Get: Offset calculated:` g . /N
+   `Get: Value is:` m g ? . /N  // Use ? for array access
 ;
 
-// Move servos to position: x y z --
-:M h b! i b! j b!
-   // Map 0-3 to servo ranges (0-180)
-   h 45 * k b!            // X servo position
-   i 45 * l b!            // Y servo position
-   j 45 * m b!            // Z servo position
-   
-   // Output to servo ports
-   k #80 /O               // Servo 1 control
-   l #81 /O               // Servo 2 control
-   m #82 /O               // Servo 3 control
-   100()                  // Delay for movement
+:M `Move: Starting servo move` /N
+   h b! i b! j b!
+   `Move: Raw coords x:` h . ` y:` i . ` z:` j . /N
+   h 45 * k b!
+   i 45 * l b!
+   j 45 * m b!
+   `Move: Servo positions:` /N
+   `X servo:` k . /N
+   `Y servo:` l . /N 
+   `Z servo:` m . /N
+   k #80 /O
+   l #81 /O
+   m #82 /O
+   `Move: Servos updated, delaying` /N
+   100()
+   `Move: Complete` /N
 ;
 
-// Check whiskers: -- bool
-:W #83 /I 1 & n b! n .    // Read whisker port, mask bit 0
+:W `Whisker: Reading port` /N
+   #83 /I 1 & n b! n .
+   `Whisker: State is:` n . /N
 ;
 
-// Scan single position: x y z --
-:P h b! i b! j b!
-   h i j M                // Move to position
-   100()                  // Wait for movement
-   W (                    // If whisker contact
-      1 h i j S           // Mark position as occupied
+:P `Pos Scan: Starting` /N
+   h b! i b! j b!
+   `Pos Scan: Moving to x:` h . ` y:` i . ` z:` j . /N
+   h i j M
+   `Pos Scan: Moved, waiting` /N
+   100()
+   `Pos Scan: Checking whisker` /N
+   W (
+      `Pos Scan: Contact! Marking position` /N
+      1 h i j S
+   ) /E (
+      `Pos Scan: No contact` /N
    )
 ;
 
-// Full scan sequence
-:F 4( /i o b!            // For each z layer
-     4( /i p b!          // For each y row
-        4( /i q b!       // For each x column
-           q p o P       // Scan position
-        )
-     )
-  )
+:F `Full Scan: Starting` /N
+   4( /i o b!
+      `Full Scan: Layer ` o . /N
+      4( /i p b!
+         `Full Scan: Row ` p . /N
+         4( /i q b!
+            `Full Scan: Column ` q . /N
+            q p o P
+         )
+      )
+   )
+   `Full Scan: Complete` /N
 ;
 
-// Main loop
-:L I                     // Initialize array
-   /U(                   // Infinite loop
-      F                  // Do full scan
-      1000()            // Wait 5 seconds
+:L `Loop: Starting` /N
+   I
+   `Loop: Initialized` /N
+   /U(
+      `Loop: Starting scan` /N
+      F
+      `Loop: Scan complete, delaying` /N
+      1000()
    )
 ;
-
-// To run: L
 ```
 
 
