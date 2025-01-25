@@ -118,4 +118,181 @@ Key adaptations from the original code:
 
 To run the program, simply enter `L` at the MINT prompt. The robot will initialize the map and continuously scan the space, updating the map when contact is detected.
 
-Let me know if you'd like me to explain any part in more detail or make modifications to the code.
+# ASM code
+
+```
+; 3D Space Mapping Robot Control
+; Memory layout:
+; 4x4x4 array starts at ARRAY_BASE
+; Each cell is 1 byte
+
+        ORG     8000h           ; Program start
+
+ARRAY_BASE:      EQU 9000h      ; Array location
+SERVO_X:         EQU 80h        ; Servo X port
+SERVO_Y:         EQU 81h        ; Servo Y port
+SERVO_Z:         EQU 82h        ; Servo Z port
+WHISKER_PORT:    EQU 83h        ; Whisker input port
+
+; Initialize array
+init:   LD      HL,ARRAY_BASE   ; Point to array start
+        LD      B,64            ; 64 bytes to clear
+        XOR     A               ; A = 0
+init_loop:
+        LD      (HL),A          ; Clear byte
+        INC     HL              ; Next position
+        DJNZ    init_loop       ; Repeat 64 times
+        RET
+
+; Calculate array offset
+; Input: B=X, C=Y, D=Z
+; Output: HL=offset
+calc_offset:
+        LD      A,D             ; Get Z
+        LD      H,0
+        LD      L,A
+        ADD     HL,HL           ; *2
+        ADD     HL,HL           ; *4
+        ADD     HL,HL           ; *8
+        ADD     HL,HL           ; *16 (Z*16)
+        
+        LD      A,C             ; Get Y
+        LD      E,A
+        LD      D,0
+        ADD     HL,DE
+        ADD     HL,HL           ; Y*4
+        ADD     HL,HL
+        
+        LD      A,B             ; Get X
+        LD      E,A
+        LD      D,0
+        ADD     HL,DE           ; Add X
+        
+        LD      DE,ARRAY_BASE
+        ADD     HL,DE           ; Add base address
+        RET
+
+; Set value in array
+; Input: B=X, C=Y, D=Z, E=value
+set_value:
+        PUSH    DE
+        CALL    calc_offset
+        POP     DE
+        LD      (HL),E
+        RET
+
+; Get value from array
+; Input: B=X, C=Y, D=Z
+; Output: A=value
+get_value:
+        CALL    calc_offset
+        LD      A,(HL)
+        RET
+
+; Move servos
+; Input: B=X, C=Y, D=Z
+move_servos:
+        ; X servo
+        LD      A,B
+        CALL    scale_pos       ; Scale 0-3 to 0-180
+        OUT     (SERVO_X),A
+        
+        ; Y servo
+        LD      A,C
+        CALL    scale_pos
+        OUT     (SERVO_Y),A
+        
+        ; Z servo
+        LD      A,D
+        CALL    scale_pos
+        OUT     (SERVO_Z),A
+        
+        CALL    delay
+        RET
+
+; Scale position (0-3) to servo range (0-180)
+scale_pos:
+        LD      H,45            ; Multiply by 45
+        CALL    multiply
+        RET
+
+; Multiply A by H
+multiply:
+        LD      B,A             ; Save multiplier
+        LD      C,0             ; Initialize result
+        LD      A,H             ; Get multiplicand
+mult_loop:
+        OR      A               ; Check if done
+        RET     Z
+        ADD     A,C             ; Add to result
+        LD      C,A             ; Save result
+        DJNZ    mult_loop       ; Decrement counter
+        RET
+
+; Check whiskers
+check_whiskers:
+        IN      A,(WHISKER_PORT)
+        AND     1               ; Mask bit 0
+        RET
+
+; Scan single position
+scan_pos:
+        PUSH    BC
+        PUSH    DE
+        CALL    move_servos
+        CALL    delay
+        CALL    check_whiskers
+        OR      A
+        JR      Z,scan_end
+        LD      E,1             ; Mark as occupied
+        CALL    set_value
+scan_end:
+        POP     DE
+        POP     BC
+        RET
+
+; Delay routine
+delay:  LD      BC,5000
+delay_loop:
+        DEC     BC
+        LD      A,B
+        OR      C
+        JR      NZ,delay_loop
+        RET
+
+; Main scan loop
+scan_all:
+        LD      D,0             ; Z=0
+z_loop: LD      C,0             ; Y=0
+y_loop: LD      B,0             ; X=0
+x_loop: CALL    scan_pos
+        INC     B
+        LD      A,B
+        CP      4
+        JR      NZ,x_loop
+        INC     C
+        LD      A,C
+        CP      4
+        JR      NZ,y_loop
+        INC     D
+        LD      A,D
+        CP      4
+        JR      NZ,z_loop
+        RET
+
+; Main program
+main:   CALL    init
+main_loop:
+        CALL    scan_all
+        CALL    delay
+        JR      main_loop
+```
+
+Key differences from MINT:
+
+Direct memory access instead of array operators
+Hardware I/O using IN/OUT instructions
+Register-based calculations instead of stack operations
+Nested loops using labels instead of counters
+Binary arithmetic instead of decimal
+
